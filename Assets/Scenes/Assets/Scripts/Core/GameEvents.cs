@@ -16,6 +16,7 @@ namespace DungeonPrototype.Core
         public static event Action<Vector3, float, float> NoiseEmitted;
 
         public static event Action<float, float, float> DragonManaChanged;
+        public static event Action DragonHPIsZero;
         public static event Action<DragonStage> DragonStageChanged;
         public static event Action<Color> DragonEssenceColorChanged;
 
@@ -51,5 +52,8 @@ namespace DungeonPrototype.Core
 
         public static void RaisePlayerHealthChanged(float current, float max)
             => PlayerHealthChanged?.Invoke(current, max);
+
+        public static void RaiseDragonHPIsZero() 
+            => DragonHPIsZero?.Invoke();
     }
 }

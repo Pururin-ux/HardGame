@@ -15,53 +15,57 @@ namespace DungeonPrototype.Dragon
         private float _lastFedTime;
         private float _damageTickTimer;
 
-        private void Awake()
-        {
-            _lastFedTime = Time.time;
-        }
+        //private void Awake()
+        //{
+        //    _lastFedTime = Time.time;
+        //}
 
         private void OnEnable()
         {
-            GameEvents.DragonManaChanged += OnDragonManaChanged;
+            GameEvents.DragonHPIsZero += OnDragonManaChanged;
         }
 
         private void OnDisable()
         {
-            GameEvents.DragonManaChanged -= OnDragonManaChanged;
+            GameEvents.DragonHPIsZero -= OnDragonManaChanged;
         }
 
         private void Update()
         {
-            if (dragon == null || playerHealth == null)
-            {
-                return;
-            }
+            //if (dragon == null || playerHealth == null)
+            //{
+            //    return;
+            //}
 
-            if (dragon.CurrentStage != DragonStage.Hatchling)
-            {
-                return;
-            }
+            //if (dragon.CurrentStage != DragonStage.Hatchling)
+            //{
+            //    return;
+            //}
 
-            if (Time.time - _lastFedTime < starvingAfterSeconds)
-            {
-                return;
-            }
+            //if (Time.time - _lastFedTime < starvingAfterSeconds)
+            //{
+            //    return;
+            //}
 
-            _damageTickTimer += Time.deltaTime;
-            if (_damageTickTimer >= tickInterval)
-            {
-                _damageTickTimer = 0f;
-                playerHealth.TakeDamage(damagePerTick);
-            }
+            //_damageTickTimer += Time.deltaTime;
+            //if (_damageTickTimer >= tickInterval)
+            //{
+            //    _damageTickTimer = 0f;
+            //    playerHealth.TakeDamage(damagePerTick);
+            //}
         }
 
-        private void OnDragonManaChanged(float current, float max, float delta)
+        private void OnDragonManaChanged()
         {
-            if (delta > 0f)
-            {
-                _lastFedTime = Time.time;
-                _damageTickTimer = 0f;
-            }
+            playerHealth.TakeDamage(damagePerTick);
+            Debug.Log(playerHealth.CurrentHealth);
+           
+
+            //if (delta > 0f)
+            //{
+            //    _lastFedTime = Time.time;
+            //    _damageTickTimer = 0f;
+            //}
         }
     }
 }

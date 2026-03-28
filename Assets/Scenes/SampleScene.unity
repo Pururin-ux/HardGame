@@ -206,7 +206,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.25249782, y: -0, z: -0, w: 0.96759754}
-  m_LocalPosition: {x: 0, y: 5.28, z: -4.3}
+  m_LocalPosition: {x: 0, y: 0.717, z: 0.452}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1448,6 +1448,7 @@ GameObject:
   - component: {fileID: 1785267753}
   - component: {fileID: 1785267752}
   - component: {fileID: 1785267755}
+  - component: {fileID: 1785267760}
   m_Layer: 0
   m_Name: Player1
   m_TagString: Untagged
@@ -1508,7 +1509,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8904b3f2862e89349aac1637add031ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonPrototype.Mana.ManaDrainInteractor
-  dragon: {fileID: 0}
+  dragon: {fileID: 2030846935}
   interactRange: 3
   drainRatePerSecond: 8
   crystalMask:
@@ -1620,6 +1621,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1785267751}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1785267760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1785267751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a05c4cc803bf3ed46894fa2153fa2e2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonPrototype.Player.SimpleFirstPersonController
+  cameraPivot: {fileID: 330585546}
+  moveSpeed: 4.5
+  jumpHeight: 1.2
+  gravity: -20
+  mouseSensitivity: 2.2
+  minPitch: -75
+  maxPitch: 75
+  lockCursorOnStart: 1
 --- !u!1 &2030846934
 GameObject:
   m_ObjectHideFlags: 0
