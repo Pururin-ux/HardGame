@@ -8,95 +8,39 @@ namespace DungeonPrototype.Dragon
     {
         [Header("Mana")]
         [SerializeField] private float maxMana = 100f;
-        [SerializeField] private float stage2Threshold = 35f;
-        [SerializeField] private float stage3Threshold = 75f;
-
-        [Header("Growth")]
-        [SerializeField] private Vector3 hatchlingScale = Vector3.one * 0.6f;
-        [SerializeField] private Vector3 sacredScale = Vector3.one * 1.75f;
-        [SerializeField] private float scaleLerpSpeed = 3f;
-
-        public List<DragonStageData> stageModels;
 
         [Header("Essence")]
         [SerializeField] private Gradient essenceByMana;
 
         [Header("Mana Drain")]
-        [SerializeField] private float manaDrainInterval = 5f; // Интервал в секундах
-        [SerializeField] private float manaDrainAmount = 1f; // Количество маны за тик
-
+        [SerializeField] private float manaDrainInterval = 5f;
+        [SerializeField] private float manaDrainAmount = 1f;
 
         public float CurrentMana { get; private set; }
         public float MaxMana => maxMana;
-        public DragonStage CurrentStage { get; private set; } = DragonStage.Hatchling;
-
-        public float ManaWeight => CurrentMana;
         public Color EssenceColor => essenceByMana.Evaluate(Mathf.Clamp01(CurrentMana / maxMana));
 
-        private Vector3 _targetScale;
         private float _drainTimer;
 
         private void Awake()
         {
-            transform.localScale = hatchlingScale;
-            _targetScale = hatchlingScale;
-            InitializeStageModels();
-            UpdateStageModel(CurrentStage);
+            CurrentMana = maxMana;
             BroadcastState(0f);
-
             _drainTimer = manaDrainInterval;
         }
 
         private void Update()
         {
-            transform.localScale = Vector3.Lerp(transform.localScale, _targetScale, Time.deltaTime * scaleLerpSpeed);
-
             _drainTimer -= Time.deltaTime;
             if (_drainTimer <= 0f)
             {
                 DrainManaOverTime();
                 _drainTimer = manaDrainInterval;
             }
-
-            //Debug.Log("Dragon mana" + ManaWeight);
-        }
-
-        private void InitializeStageModels()
-        {
-            foreach (var stageData in stageModels)
-            {
-                if (stageData.modelPrefab != null)
-                {
-                    stageData.instantiatedModel = Instantiate(stageData.modelPrefab, transform);
-
-                    stageData.instantiatedModel.transform.localPosition = Vector3.zero;
-                    stageData.instantiatedModel.transform.localRotation = Quaternion.identity;
-
-                    stageData.instantiatedModel.transform.localScale = stageData.scale;
-                    stageData.instantiatedModel.SetActive(false);
-                }
-            }
-        }
-
-        private void UpdateStageModel(DragonStage newStage)
-        {
-            DragonStageData newStageData = stageModels.Find(data => data.stage == newStage);
-
-            if (newStageData == null || newStageData.modelPrefab == null)
-                return;
-
-            foreach (var stageData in stageModels)
-            {
-                if (stageData.instantiatedModel != null)
-                    stageData.instantiatedModel.SetActive(false);
-            }
-
-            newStageData.instantiatedModel.SetActive(true);
         }
 
         private void DrainManaOverTime()
         {
-
             if (CurrentMana <= 0f)
             {
                 GameEvents.RaiseDragonHPIsZero();
@@ -105,17 +49,13 @@ namespace DungeonPrototype.Dragon
 
             float drainedAmount = Mathf.Min(manaDrainAmount, CurrentMana);
             RemoveMana(drainedAmount);
-
-            // Опционально: событие для визуальных эффектов
             Debug.Log($"Dragon lost {drainedAmount} mana over time. Current mana: {CurrentMana}");
         }
 
         public float AddMana(float amount)
         {
             if (amount <= 0f)
-            {
                 return 0f;
-            }
 
             float before = CurrentMana;
             CurrentMana = Mathf.Clamp(CurrentMana + amount, 0f, maxMana);
@@ -123,8 +63,6 @@ namespace DungeonPrototype.Dragon
 
             if (gained > 0f)
             {
-                EvaluateStage();
-                UpdateTargetScale();
                 BroadcastState(gained);
             }
 
@@ -134,9 +72,7 @@ namespace DungeonPrototype.Dragon
         public float RemoveMana(float amount)
         {
             if (amount <= 0f)
-            {
                 return 0f;
-            }
 
             float before = CurrentMana;
             CurrentMana = Mathf.Clamp(CurrentMana - amount, 0f, maxMana);
@@ -144,44 +80,10 @@ namespace DungeonPrototype.Dragon
 
             if (removed > 0f)
             {
-                EvaluateStage();
-                UpdateTargetScale();
                 BroadcastState(-removed);
             }
 
             return removed;
-        }
-
-        public bool IsAtLeastStage(DragonStage stage) => CurrentStage >= stage;
-
-        private void UpdateTargetScale()
-        {
-            float t = Mathf.Clamp01(CurrentMana / maxMana);
-            _targetScale = Vector3.Lerp(hatchlingScale, sacredScale, t);
-        }
-
-        private void EvaluateStage()
-        {
-            DragonStage previous = CurrentStage;
-
-            if (CurrentMana >= stage3Threshold)
-            {
-                CurrentStage = DragonStage.Sacred;
-            }
-            else if (CurrentMana >= stage2Threshold)
-            {
-                CurrentStage = DragonStage.Companion;
-            }
-            else
-            {
-                CurrentStage = DragonStage.Hatchling;
-            }
-
-            if (previous != CurrentStage)
-            {
-                UpdateStageModel(CurrentStage);
-                GameEvents.RaiseDragonStageChanged(CurrentStage);
-            }
         }
 
         private void BroadcastState(float delta)
