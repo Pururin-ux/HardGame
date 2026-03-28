@@ -18,11 +18,11 @@ namespace DungeonPrototype.Dragon
         [SerializeField] private float stage3Threshold = 75f;
 
         [Header("Stage Models")]
-        [SerializeField] private List<DragonStageData> stageModels;
+        public List<DragonStageData> stageModels;
 
         private Vector3 _targetScale;
         private float _maxMana;
-        private DragonStage _currentStage = DragonStage.Hatchling;
+        public DragonStage CurrentStage = DragonStage.Hatchling;
 
         private void Awake()
         {
@@ -32,7 +32,7 @@ namespace DungeonPrototype.Dragon
 
             // Инициализация моделей
             InitializeStageModels();
-            UpdateStageModel(_currentStage);
+            UpdateStageModel(CurrentStage);
         }
 
         private void OnEnable()
@@ -70,25 +70,25 @@ namespace DungeonPrototype.Dragon
 
         private void EvaluateStage(float currentMana)
         {
-            DragonStage previous = _currentStage;
+            DragonStage previous = CurrentStage;
 
             if (currentMana >= stage3Threshold)
             {
-                _currentStage = DragonStage.Sacred;
+                CurrentStage = DragonStage.Sacred;
             }
             else if (currentMana >= stage2Threshold)
             {
-                _currentStage = DragonStage.Companion;
+                CurrentStage = DragonStage.Companion;
             }
             else
             {
-                _currentStage = DragonStage.Hatchling;
+                CurrentStage = DragonStage.Hatchling;
             }
 
-            if (previous != _currentStage)
+            if (previous != CurrentStage)
             {
-                UpdateStageModel(_currentStage);
-                GameEvents.RaiseDragonStageChanged(_currentStage);
+                UpdateStageModel(CurrentStage);
+                GameEvents.RaiseDragonStageChanged(CurrentStage);
             }
         }
 
@@ -132,11 +132,11 @@ namespace DungeonPrototype.Dragon
 
         public void ForceSetStage(DragonStage stage)
         {
-            _currentStage = stage;
-            UpdateStageModel(_currentStage);
+            CurrentStage = stage;
+            UpdateStageModel(CurrentStage);
         }
 
-        public DragonStage GetCurrentStage() => _currentStage;
+        public DragonStage GetCurrentStage() => CurrentStage;
     }
 }
 
