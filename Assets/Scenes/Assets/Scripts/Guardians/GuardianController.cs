@@ -11,7 +11,7 @@ namespace DungeonPrototype.Guardians
     {
         [Header("References")]
         [SerializeField] private Transform player;
-        [SerializeField] private DragonCompanion dragon;
+        [SerializeField] private DragonGrowthController dragon;
         [SerializeField] private GuardianNicheBlocker nicheBlocker;
 
         [Header("Awareness")]
@@ -276,7 +276,7 @@ namespace DungeonPrototype.Guardians
                 return;
             }
 
-            if (!dragon.IsAtLeastStage(DragonStage.Companion))
+            if (dragon.CurrentStage != DragonStage.Companion)
             {
                 return;
             }
