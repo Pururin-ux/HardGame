@@ -35,7 +35,6 @@ namespace DungeonPrototype.EditorTools
             EnsureInputSystemEventModule(scene);
 
             GameObject levelRoot = new GameObject("LevelRoot");
-            levelRoot.AddComponent<LinearTutorialRuntimePatcher>();
             GameObject uiRoot = CreateTutorialUi();
             GameObject gameManager = new GameObject("GameManager");
 
@@ -114,7 +113,7 @@ namespace DungeonPrototype.EditorTools
             Text promptText = uiRoot.transform.Find("TutorialUI/PromptText")?.GetComponent<Text>();
             SetObjectField(tutorialPrompt, "promptText", promptText);
             SetStringField(tutorialPrompt, "enterMessage", "Вытянуть ману");
-            SetStringField(tutorialPrompt, "idleMessage", string.Empty);
+            SetStringField(tutorialPrompt, "idleMessage", "Нажмите E для взаимодействия");
 
             // Room 3: first risk.
             GameObject room3 = new GameObject("Room3_FirstRisk");
@@ -124,10 +123,9 @@ namespace DungeonPrototype.EditorTools
             CreateWall(room3.transform, "Room3_Wall_North", new Vector3(30f, 2f, 6f), new Vector3(16f, 4f, 0.8f));
             CreateWall(room3.transform, "Room3_Wall_South", new Vector3(30f, 2f, -6f), new Vector3(16f, 4f, 0.8f));
             CreateWall(room3.transform, "Room3_Wall_East", new Vector3(38f, 2f, 0f), new Vector3(0.8f, 4f, 12f));
-            // West wall split with a walkable doorway to Room 3.
-            CreateWall(room3.transform, "Room3_Wall_West_NorthPart", new Vector3(22f, 2f, 3.5f), new Vector3(0.8f, 4f, 5f));
-            CreateWall(room3.transform, "Room3_Wall_West_SouthPart", new Vector3(22f, 2f, -3.5f), new Vector3(0.8f, 4f, 5f));
-            CreateWall(room3.transform, "Room3_Wall_West_TopPart", new Vector3(22f, 3.2f, 0f), new Vector3(0.8f, 1.6f, 2f));
+            CreateWall(room3.transform, "Room3_Wall_West_NorthPart", new Vector3(22f, 2f, 4f), new Vector3(0.8f, 4f, 8f));
+            CreateWall(room3.transform, "Room3_Wall_West_SouthPart", new Vector3(22f, 2f, -4f), new Vector3(0.8f, 4f, 8f));
+            CreateWall(room3.transform, "Room3_Wall_West_TopPart", new Vector3(22f, 3.1f, 0f), new Vector3(0.8f, 1.8f, 4f));
             CreateTorch(room3.transform, "Room3_Torch", new Vector3(22.8f, 1.8f, -5f));
 
             // Transition floors to avoid seams/fall-through between room chunks.
