@@ -17,6 +17,11 @@ namespace DungeonPrototype.Mana
         [SerializeField] private Renderer crystalRenderer;
         [SerializeField] private Color activeEmissionColor = Color.cyan;
         [SerializeField] private Color drainingEmissionColor = Color.white;
+        [SerializeField] private Color depletedEmissionColor = new Color(0.03f, 0.03f, 0.03f, 1f);
+
+        [Header("Depletion")]
+        [SerializeField] private bool disableCollidersOnDepleted = true;
+        [SerializeField] private bool removeFromCrystalLayerOnDepleted = true;
 
         public float CurrentMana { get; private set; }
         public float MaxMana => maxMana;
@@ -65,6 +70,7 @@ namespace DungeonPrototype.Mana
                 {
                     _isDraining = false;
                     UpdateEmission(false);
+                    SetInactiveAfterDepletion();
                     GameEvents.RaiseCrystalDepleted(this);
                     GameEvents.RaiseCrystalDrainEnded(this, maxMana, true);
                     GameEvents.RaiseNoise(transform.position, humNoiseRadius * 1.5f, depletedThreat);
@@ -100,6 +106,14 @@ namespace DungeonPrototype.Mana
                 return;
             }
 
+            if (IsDepleted)
+            {
+                crystalRenderer.GetPropertyBlock(_mpb);
+                _mpb.SetColor("_EmissionColor", depletedEmissionColor);
+                crystalRenderer.SetPropertyBlock(_mpb);
+                return;
+            }
+
             float manaRatio = Mathf.Clamp01(CurrentMana / maxMana);
             Color baseColor = Color.Lerp(Color.black, activeEmissionColor, manaRatio);
             Color finalEmission = isDraining ? Color.Lerp(baseColor, drainingEmissionColor, 0.7f) : baseColor;
@@ -107,6 +121,23 @@ namespace DungeonPrototype.Mana
             crystalRenderer.GetPropertyBlock(_mpb);
             _mpb.SetColor("_EmissionColor", finalEmission);
             crystalRenderer.SetPropertyBlock(_mpb);
+        }
+
+        private void SetInactiveAfterDepletion()
+        {
+            if (disableCollidersOnDepleted)
+            {
+                Collider[] colliders = GetComponentsInChildren<Collider>(true);
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    colliders[i].enabled = false;
+                }
+            }
+
+            if (removeFromCrystalLayerOnDepleted)
+            {
+                gameObject.layer = 0;
+            }
         }
     }
 }

@@ -14,6 +14,8 @@ namespace DungeonPrototype.Environment
         private MaterialPropertyBlock _mpb;
         private bool _isOpen;
 
+        public bool IsOpen => _isOpen;
+
         private void Awake()
         {
             _mpb = new MaterialPropertyBlock();

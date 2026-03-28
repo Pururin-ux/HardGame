@@ -10,6 +10,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 namespace DungeonPrototype.EditorTools
 {
@@ -27,6 +28,7 @@ namespace DungeonPrototype.EditorTools
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             scene.name = "DungeonPrototype_Prototype";
+            EnsureInputSystemEventModule(scene);
 
             int crystalLayer = EnsureLayerExists("Crystal", 8);
 
@@ -74,6 +76,8 @@ namespace DungeonPrototype.EditorTools
             DragonHungerSystem hungerSystem = systems.AddComponent<DragonHungerSystem>();
             systems.AddComponent<CrystalDrainAlarmRelay>();
             GuardianDeathRewardRelay rewardRelay = systems.AddComponent<GuardianDeathRewardRelay>();
+            Component flowController = TryAddComponentByName(systems, "DungeonPrototype.Gameplay.GameplayFlowController");
+            Component pauseMenu = TryAddComponentByName(systems, "DungeonPrototype.UI.PauseMenuController");
 
             GameObject gateRoot = new GameObject("GateRoot");
             gateRoot.transform.position = new Vector3(0f, 0f, 7f);
@@ -84,6 +88,25 @@ namespace DungeonPrototype.EditorTools
             door.transform.SetParent(gateRoot.transform);
             door.transform.localPosition = new Vector3(0f, 1.5f, 0f);
             door.transform.localScale = new Vector3(3f, 3f, 0.4f);
+
+            GameObject exitZone = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            exitZone.name = "ExitZone";
+            exitZone.transform.position = new Vector3(0f, 1f, 11f);
+            exitZone.transform.localScale = new Vector3(4f, 2f, 1.5f);
+            Collider exitCollider = exitZone.GetComponent<Collider>();
+            if (exitCollider != null)
+            {
+                exitCollider.isTrigger = true;
+            }
+
+            Renderer exitRenderer = exitZone.GetComponent<Renderer>();
+            if (exitRenderer != null)
+            {
+                exitRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                exitRenderer.enabled = false;
+            }
+
+            Component levelExitZone = TryAddComponentByName(exitZone, "DungeonPrototype.Environment.LevelExitZone");
 
             GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
             plate.name = "PressurePlate";
@@ -114,6 +137,21 @@ namespace DungeonPrototype.EditorTools
 
             SetObjectField(rewardRelay, "dragon", dragonCompanion);
             SetObjectField(rewardRelay, "inventory", inventory);
+            SetObjectField(flowController, "playerHealth", playerHealth);
+            SetObjectField(flowController, "dragon", dragonCompanion);
+            SetObjectField(flowController, "playerController", firstPersonController);
+            SetObjectField(flowController, "gate", gateController);
+            SetStringField(flowController, "fallbackGameplayScene", "DungeonPrototype_Prototype");
+            SetStringField(flowController, "mainMenuScene", "MainMenu");
+
+            SetObjectField(levelExitZone, "flow", flowController);
+
+            if (pauseMenu != null)
+            {
+                SetObjectField(pauseMenu, "playerController", firstPersonController);
+                SetStringField(pauseMenu, "fallbackGameplayScene", "DungeonPrototype_Prototype");
+                SetStringField(pauseMenu, "mainMenuScene", "MainMenu");
+            }
 
             SetObjectField(gateController, "gateMesh", door.transform);
             SetObjectField(gateController, "slotRenderers", new[] { door.GetComponent<Renderer>() });
@@ -284,6 +322,83 @@ namespace DungeonPrototype.EditorTools
 
             prop.intValue = value;
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetStringField(UnityEngine.Object target, string fieldName, string value)
+        {
+            SerializedObject so = new SerializedObject(target);
+            SerializedProperty prop = so.FindProperty(fieldName);
+            if (prop == null)
+            {
+                return;
+            }
+
+            prop.stringValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void EnsureInputSystemEventModule(Scene scene)
+        {
+            EventSystem eventSystem = UnityEngine.Object.FindObjectOfType<EventSystem>();
+            if (eventSystem == null)
+            {
+                GameObject es = new GameObject("EventSystem", typeof(EventSystem));
+                eventSystem = es.GetComponent<EventSystem>();
+            }
+
+            Type inputSystemModuleType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            if (inputSystemModuleType != null)
+            {
+                Component standalone = eventSystem.GetComponent("StandaloneInputModule");
+                if (standalone != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(standalone);
+                }
+
+                if (eventSystem.GetComponent(inputSystemModuleType) == null)
+                {
+                    eventSystem.gameObject.AddComponent(inputSystemModuleType);
+                }
+            }
+            else
+            {
+                if (eventSystem.GetComponent("StandaloneInputModule") == null)
+                {
+                    eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+                }
+            }
+
+            if (!eventSystem.gameObject.scene.IsValid())
+            {
+                SceneManager.MoveGameObjectToScene(eventSystem.gameObject, scene);
+            }
+        }
+
+        private static Component TryAddComponentByName(GameObject target, string fullTypeName)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(fullTypeName))
+            {
+                return null;
+            }
+
+            Type resolved = null;
+            System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                resolved = assemblies[i].GetType(fullTypeName, false);
+                if (resolved != null)
+                {
+                    break;
+                }
+            }
+
+            if (resolved == null)
+            {
+                return null;
+            }
+
+            Component existing = target.GetComponent(resolved);
+            return existing != null ? existing : target.AddComponent(resolved);
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "unity": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "d:\\Unity\\Hackaton\\HardGame\\.vscode\\unity-mcp-server.js"
+      ]
+    }
+  }
+}
