@@ -39,6 +39,10 @@ namespace DungeonPrototype.Guardians
         [Header("NavMesh")]
         [SerializeField] private float navMeshAttachDistance = 3f;
 
+        [Header("Stun")]
+        [SerializeField] private bool showStunCooldownLabel = true;
+        [SerializeField] private Vector3 stunCooldownLabelOffset = new Vector3(0f, 2.4f, 0f);
+
         private NavMeshAgent _agent;
         private PlayerHealth _playerHealth;
         private GuardianAggroHitboxRelay _aggroHitbox;
@@ -48,8 +52,14 @@ namespace DungeonPrototype.Guardians
         private float _health;
         private float _nextAttackTime;
         private GuardianState _state = GuardianState.Dormant;
+        private float _stunUntilTime;
+        private float _stunCooldownEndTime;
+        private bool _wasStunned;
+        private TextMesh _stunCooldownLabel;
 
         public GuardianState State => _state;
+        public bool IsStunned => Time.time < _stunUntilTime;
+        public float StunCooldownRemaining => Mathf.Max(0f, _stunCooldownEndTime - Time.time);
 
         private void Awake()
         {
@@ -90,6 +100,13 @@ namespace DungeonPrototype.Guardians
         private void Update()
         {
             if (_state == GuardianState.Dead)
+            {
+                return;
+            }
+
+            UpdateStunState();
+            UpdateStunCooldownLabel();
+            if (IsStunned)
             {
                 return;
             }
@@ -198,6 +215,32 @@ namespace DungeonPrototype.Guardians
             {
                 Die();
             }
+        }
+
+        public bool TryApplyStun(float stunDuration, float cooldownDuration, out float cooldownRemaining)
+        {
+            cooldownRemaining = StunCooldownRemaining;
+            if (_state == GuardianState.Dead || cooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            float safeStun = Mathf.Max(0.1f, stunDuration);
+            float safeCooldown = Mathf.Max(safeStun, cooldownDuration);
+
+            _stunUntilTime = Time.time + safeStun;
+            _stunCooldownEndTime = Time.time + safeCooldown;
+            _wasStunned = true;
+
+            SetAgentStoppedSafe(true);
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.ResetPath();
+            }
+
+            UpdateStunCooldownLabel();
+            cooldownRemaining = StunCooldownRemaining;
+            return true;
         }
 
         private void OnNoiseEmitted(Vector3 position, float radius, float threat)
@@ -483,6 +526,11 @@ namespace DungeonPrototype.Guardians
 
         private void TryAttackPlayer()
         {
+            if (IsStunned)
+            {
+                return;
+            }
+
             if (_playerHealth == null && player != null)
             {
                 _playerHealth = player.GetComponentInParent<PlayerHealth>();
@@ -544,6 +592,93 @@ namespace DungeonPrototype.Guardians
             }
 
             return relay;
+        }
+
+        private void UpdateStunState()
+        {
+            if (IsStunned)
+            {
+                _wasStunned = true;
+                SetAgentStoppedSafe(true);
+                return;
+            }
+
+            if (!_wasStunned)
+            {
+                return;
+            }
+
+            _wasStunned = false;
+            bool shouldStop = _state == GuardianState.Dormant || _state == GuardianState.Trapped || _state == GuardianState.Dead;
+            SetAgentStoppedSafe(shouldStop);
+        }
+
+        private void UpdateStunCooldownLabel()
+        {
+            if (!showStunCooldownLabel)
+            {
+                return;
+            }
+
+            if (_stunCooldownLabel == null)
+            {
+                EnsureStunLabel();
+            }
+
+            if (_stunCooldownLabel == null)
+            {
+                return;
+            }
+
+            float cooldownLeft = StunCooldownRemaining;
+            if (cooldownLeft <= 0f)
+            {
+                _stunCooldownLabel.gameObject.SetActive(false);
+                return;
+            }
+
+            _stunCooldownLabel.gameObject.SetActive(true);
+            _stunCooldownLabel.text = IsStunned ? $"STUN {cooldownLeft:0.0}s" : $"CD {cooldownLeft:0.0}s";
+
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 lookDir = _stunCooldownLabel.transform.position - cam.transform.position;
+                if (lookDir.sqrMagnitude > 0.0001f)
+                {
+                    _stunCooldownLabel.transform.rotation = Quaternion.LookRotation(lookDir.normalized, Vector3.up);
+                }
+            }
+        }
+
+        private void EnsureStunLabel()
+        {
+            Transform existing = transform.Find("StunCooldownLabel");
+            Transform labelTransform = existing;
+
+            if (labelTransform == null)
+            {
+                GameObject labelObject = new GameObject("StunCooldownLabel");
+                labelTransform = labelObject.transform;
+                labelTransform.SetParent(transform, false);
+            }
+
+            labelTransform.localPosition = stunCooldownLabelOffset;
+            labelTransform.localRotation = Quaternion.identity;
+
+            _stunCooldownLabel = labelTransform.GetComponent<TextMesh>();
+            if (_stunCooldownLabel == null)
+            {
+                _stunCooldownLabel = labelTransform.gameObject.AddComponent<TextMesh>();
+            }
+
+            _stunCooldownLabel.text = string.Empty;
+            _stunCooldownLabel.anchor = TextAnchor.MiddleCenter;
+            _stunCooldownLabel.alignment = TextAlignment.Center;
+            _stunCooldownLabel.fontSize = 42;
+            _stunCooldownLabel.characterSize = 0.045f;
+            _stunCooldownLabel.color = new Color(1f, 0.25f, 0.25f, 1f);
+            _stunCooldownLabel.gameObject.SetActive(false);
         }
     }
 }

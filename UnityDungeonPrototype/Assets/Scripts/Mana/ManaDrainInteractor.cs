@@ -21,6 +21,11 @@ namespace DungeonPrototype.Mana
         {
             if (IsDrainStarted())
             {
+                if (TryActivateStunCrystal())
+                {
+                    return;
+                }
+
                 TryStartDrain();
             }
 
@@ -33,6 +38,17 @@ namespace DungeonPrototype.Mana
             {
                 StopDrain();
             }
+        }
+
+        private bool TryActivateStunCrystal()
+        {
+            StunCrystal nearest = FindNearestStunCrystal();
+            if (nearest == null)
+            {
+                return false;
+            }
+
+            return nearest.TryActivate(transform);
         }
 
         private bool IsDrainStarted()
@@ -122,6 +138,33 @@ namespace DungeonPrototype.Mana
             {
                 ManaCrystal crystal = hits[i].GetComponentInParent<ManaCrystal>();
                 if (crystal == null || crystal.IsDepleted)
+                {
+                    continue;
+                }
+
+                float sqr = (crystal.transform.position - origin).sqrMagnitude;
+                if (sqr < nearestSqr)
+                {
+                    nearestSqr = sqr;
+                    nearest = crystal;
+                }
+            }
+
+            return nearest;
+        }
+
+        private StunCrystal FindNearestStunCrystal()
+        {
+            Vector3 origin = sourcePoint != null ? sourcePoint.position : transform.position;
+            Collider[] hits = Physics.OverlapSphere(origin, interactRange, crystalMask, QueryTriggerInteraction.Collide);
+
+            StunCrystal nearest = null;
+            float nearestSqr = float.MaxValue;
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                StunCrystal crystal = hits[i].GetComponentInParent<StunCrystal>();
+                if (crystal == null || crystal.IsOnCooldown)
                 {
                     continue;
                 }

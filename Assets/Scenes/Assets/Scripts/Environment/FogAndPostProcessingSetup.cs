@@ -5,34 +5,24 @@ using UnityEngine.Rendering.Universal;
 namespace DungeonPrototype.Environment
 {
     /// <summary>
-    /// Configures global fog and URP post-processing volume.
+    /// Manages global fog and post-processing effects.
     /// </summary>
     public class FogAndPostProcessingSetup : MonoBehaviour
     {
         [Header("Fog Settings")]
-        [SerializeField] private Color fogColor = new Color(0.1f, 0.1f, 0.15f, 1f);
+        [SerializeField] private Color fogColor = new Color(0.1f, 0.1f, 0.15f, 1f); // Dark blue
         [SerializeField] private float fogDensity = 0.05f;
         [SerializeField] private FogMode fogMode = FogMode.Exponential;
 
         [Header("Post-Processing")]
         [SerializeField] private float baseChromaticAberration = 0.2f;
         [SerializeField] private float maxChromaticAberration = 3.0f;
-        [SerializeField] private float bloomIntensity = 3.0f;
-        [SerializeField] private float bloomThreshold = 0.8f;
-        [SerializeField] private float bloomScatter = 0.85f;
-        [SerializeField] private float vignetteIntensity = 0.52f;
-        [SerializeField] private float vignetteSmoothness = 0.7f;
-        [SerializeField] private Color colorFilter = new Color(0.78f, 0.9f, 1f, 1f);
-        [SerializeField] private float postExposure = -0.25f;
-        [SerializeField] private float saturation = -20f;
-        [SerializeField] private float contrast = 18f;
 
         private Volume _globalVolume;
         private VolumeProfile _runtimeProfile;
         private ChromaticAberration _chromaticAberration;
         private Vignette _vignette;
         private Bloom _bloom;
-        private ColorAdjustments _colorAdjustments;
 
         private void OnEnable()
         {
@@ -42,6 +32,7 @@ namespace DungeonPrototype.Environment
 
         private void SetupGlobalFog()
         {
+            // Configure RenderSettings for global fog
             RenderSettings.fog = true;
             RenderSettings.fogColor = fogColor;
             RenderSettings.fogDensity = fogDensity;
@@ -84,31 +75,19 @@ namespace DungeonPrototype.Environment
                 _bloom = _runtimeProfile.Add<Bloom>(true);
             }
 
-            if (!_runtimeProfile.TryGet<ColorAdjustments>(out _colorAdjustments))
-            {
-                _colorAdjustments = _runtimeProfile.Add<ColorAdjustments>(true);
-            }
-
             _chromaticAberration.active = true;
             _chromaticAberration.intensity.Override(Mathf.Clamp(baseChromaticAberration, 0f, 1f));
 
             _vignette.active = true;
-            _vignette.intensity.Override(Mathf.Clamp01(vignetteIntensity));
-            _vignette.smoothness.Override(Mathf.Clamp01(vignetteSmoothness));
-            _vignette.rounded.Override(false);
+            _vignette.intensity.Override(0.2f);
 
             _bloom.active = true;
-            _bloom.intensity.Override(Mathf.Max(0f, bloomIntensity));
-            _bloom.threshold.Override(Mathf.Max(0f, bloomThreshold));
-            _bloom.scatter.Override(Mathf.Clamp01(bloomScatter));
-
-            _colorAdjustments.active = true;
-            _colorAdjustments.colorFilter.Override(colorFilter);
-            _colorAdjustments.postExposure.Override(postExposure);
-            _colorAdjustments.saturation.Override(saturation);
-            _colorAdjustments.contrast.Override(contrast);
+            _bloom.intensity.Override(0.1f);
         }
 
+        /// <summary>
+        /// Update chromatic aberration intensity based on game state
+        /// </summary>
         public void SetChromaticAberrationIntensity(float intensity)
         {
             if (_runtimeProfile == null)
