@@ -76,6 +76,8 @@ namespace DungeonPrototype.Dragon
             SetActiveSafe(hatchedVisual, stage == DragonStage.Hatchling);
             SetActiveSafe(companionVisual, stage == DragonStage.Companion);
             SetActiveSafe(sacredVisual, stage == DragonStage.Sacred);
+
+            GameEvents.RaiseDragonStageChanged(stage);
         }
 
         private void AutoBindVisuals()

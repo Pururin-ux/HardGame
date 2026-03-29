@@ -48,6 +48,7 @@ namespace DungeonPrototype.Guardians
         private float _health;
         private float _nextAttackTime;
         private GuardianState _state = GuardianState.Dormant;
+        private bool _isDragonGrown = false;
 
         public GuardianState State => _state;
 
@@ -79,12 +80,14 @@ namespace DungeonPrototype.Guardians
         {
             GameEvents.NoiseEmitted += OnNoiseEmitted;
             GameEvents.CrystalDepleted += OnCrystalDepleted;
+            GameEvents.DragonStageChanged += OnDragonStageChanged;
         }
 
         private void OnDisable()
         {
             GameEvents.NoiseEmitted -= OnNoiseEmitted;
             GameEvents.CrystalDepleted -= OnCrystalDepleted;
+            GameEvents.DragonStageChanged -= OnDragonStageChanged;
         }
 
         private void Update()
@@ -136,6 +139,40 @@ namespace DungeonPrototype.Guardians
             HandleProximityAggro();
 
             HandleDragonRepel();
+        }
+
+        private void OnDragonStageChanged(DragonStage stage)
+        {
+            // Если дракон вырос из Hatchling - стражник становится пассивным
+            if (stage != DragonStage.Hatchling)
+            {
+                _isDragonGrown = true;
+                MakePassive();
+            }
+        }
+
+        private void MakePassive()
+        {
+            if (_state == GuardianState.Dead)
+                return;
+
+            // Переводим стражника в пассивное состояние
+            _state = GuardianState.Dormant;
+            SetAgentStoppedSafe(true);
+
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.ResetPath();
+            }
+
+            // Отключаем хитбоксы, чтобы стражник не реагировал на игрока
+            if (_aggroHitbox != null)
+                _aggroHitbox.gameObject.SetActive(false);
+
+            if (_attackHitbox != null)
+                _attackHitbox.gameObject.SetActive(false);
+
+            Debug.Log($"{gameObject.name} became passive because dragon grew to {_isDragonGrown}");
         }
 
         public void NotifyPlayerInAggroRange(Transform target)
@@ -339,6 +376,8 @@ namespace DungeonPrototype.Guardians
 
         private void HandleProximityAggro()
         {
+            if (_isDragonGrown) return;
+
             if (_state == GuardianState.Dead || player == null)
             {
                 return;
