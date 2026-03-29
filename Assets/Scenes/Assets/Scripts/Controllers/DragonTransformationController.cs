@@ -38,6 +38,7 @@ namespace DungeonPrototype.Dragon
         private Quaternion _originalCameraRotation;
         private Transform _cameraPivot;
         private float _orbitAngle = 0f;
+        private DragonStage? _pendingStage = null;
 
         private void Awake()
         {
@@ -66,13 +67,39 @@ namespace DungeonPrototype.Dragon
             GameEvents.DragonStageChanged -= OnDragonStageChanged;
         }
 
-        private void OnDragonStageChanged(DragonStage newStage)
+        public void StartTransformation()
         {
-            if (!_isTransforming && newStage != growthController.GetCurrentStage())
+            if (_isTransforming) return;
+
+            // Если есть ожидаемая стадия и она отличается от текущей
+            if (_pendingStage.HasValue && _pendingStage.Value != growthController.GetCurrentStage())
             {
-                _targetStage = newStage;
+                _targetStage = _pendingStage.Value;
+                _pendingStage = null; // сбрасываем, так как начинаем трансформацию
                 StartCoroutine(TransformationSequence());
             }
+            else
+            {
+                Debug.Log("DragonTransformationController: No pending transformation or dragon already at target stage.");
+            }
+        }
+
+        // Определяет следующий этап развития
+        //private DragonStage GetNextStage(DragonStage current)
+        //{
+        //    switch (current)
+        //    {
+        //        case DragonStage.Hatchling: return DragonStage.Companion;
+        //        case DragonStage.Companion: return DragonStage.Sacred;
+        //        default: return current; // уже максимальный
+        //    }
+        //}
+
+        private void OnDragonStageChanged(DragonStage newStage)
+        {
+            if (_isTransforming) return;
+            // Сохраняем новую стадию как "ожидаемую", но трансформацию не запускаем
+            _pendingStage = newStage;
         }
 
         private IEnumerator TransformationSequence()
