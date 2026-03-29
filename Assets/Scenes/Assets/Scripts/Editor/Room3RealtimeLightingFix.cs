@@ -212,8 +212,15 @@ public static class Room3RealtimeLightingFix
 
         colorAdjustments.active = true;
         colorAdjustments.postExposure.Override(-0.7f);
-        colorAdjustments.temperature.Override(-18f);
         colorAdjustments.saturation.Override(-8f);
+
+        if (!profile.TryGet(out WhiteBalance whiteBalance))
+        {
+            whiteBalance = profile.Add<WhiteBalance>(true);
+        }
+
+        whiteBalance.active = true;
+        whiteBalance.temperature.Override(-18f);
 
         EditorUtility.SetDirty(profile);
         EditorUtility.SetDirty(volumeGO);
