@@ -29,19 +29,19 @@ namespace DungeonPrototype.Dragon
         private void OnEnable()
         {
             GameEvents.DragonManaChanged += OnDragonManaChanged;
-            GameEvents.DragonStageChanged += OnDragonStageChanged;
+            //GameEvents.DragonStageChanged += OnDragonStageChanged;
         }
 
         private void OnDisable()
         {
             GameEvents.DragonManaChanged -= OnDragonManaChanged;
-            GameEvents.DragonStageChanged -= OnDragonStageChanged;
+            //GameEvents.DragonStageChanged -= OnDragonStageChanged;
         }
 
-        private void OnDragonStageChanged(DragonStage stage)
-        {
-            ApplyStage(stage);
-        }
+        //private void OnDragonStageChanged(DragonStage stage)
+        //{
+        //        ApplyStage(stage);
+        //}
 
         private void OnDragonManaChanged(float current, float max, float delta)
         {
