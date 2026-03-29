@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.AI;
 using DungeonPrototype.Core;
 using DungeonPrototype.Dragon;
 using DungeonPrototype.Player;
+using Game.Crystals;
+using UnityEngine;
+using UnityEngine.AI;
 
 namespace DungeonPrototype.Guardians
 {
@@ -13,6 +14,7 @@ namespace DungeonPrototype.Guardians
         [SerializeField] private Transform player;
         [SerializeField] private DragonGrowthController dragon;
         [SerializeField] private GuardianNicheBlocker nicheBlocker;
+        [SerializeField] private StopGuardianCrystl stopGuardianCrystal;
 
         [Header("Awareness")]
         [SerializeField] private float hearDistanceMultiplier = 1f;
@@ -49,6 +51,7 @@ namespace DungeonPrototype.Guardians
         private float _nextAttackTime;
         private GuardianState _state = GuardianState.Dormant;
         private bool _isDragonGrown = false;
+        private bool _isStoppedByCrystal = false;
 
         public GuardianState State => _state;
 
@@ -76,6 +79,28 @@ namespace DungeonPrototype.Guardians
             SetAgentStoppedSafe(true);
         }
 
+        private bool IsStoppedByCrystal()
+        {
+            if (stopGuardianCrystal != null && stopGuardianCrystal.state)
+            {
+                if (!_isStoppedByCrystal)
+                {
+                    _isStoppedByCrystal = true;
+                    SetAgentStoppedSafe(true);
+                    Debug.Log($"{gameObject.name} stopped by crystal");
+                }
+                return true;
+            }
+            else if (_isStoppedByCrystal)
+            {
+                _isStoppedByCrystal = false;
+                SetAgentStoppedSafe(false);
+                Debug.Log($"{gameObject.name} released by crystal");
+            }
+
+            return false;
+        }
+
         private void OnEnable()
         {
             GameEvents.NoiseEmitted += OnNoiseEmitted;
@@ -95,6 +120,11 @@ namespace DungeonPrototype.Guardians
             if (_state == GuardianState.Dead)
             {
                 return;
+            }
+
+            if (IsStoppedByCrystal())
+            {
+                return; // Стражник остановлен кристаллом, не выполняем никаких действий
             }
 
             // Scene can start before NavMesh is baked/loaded; keep trying to attach silently.

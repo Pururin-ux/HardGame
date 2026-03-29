@@ -24,7 +24,7 @@ namespace DungeonPrototype.Dragon
 
         private void Awake()
         {
-            CurrentMana = maxMana;
+            CurrentMana = (float)(maxMana * 0.3);
             BroadcastState(0f);
             _drainTimer = manaDrainInterval;
         }
